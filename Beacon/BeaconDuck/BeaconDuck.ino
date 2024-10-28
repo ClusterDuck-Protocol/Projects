@@ -90,11 +90,11 @@ void loop() {
 bool runSensor(void *) {
   bool result;
 
-  string statusMessage = String("QUACK QUACK QUACK QUACK");
+  String statusMessage = String("QUACK QUACK QUACK QUACK");
   Serial.print("[MAMA] status data: ");
   Serial.println(statusMessage);
 
-  result = sendData(stringToByteVector(healthMessage), status);
+  result = sendData(stringToByteVector(statusMessage), status);
   if (result) {
      Serial.println("[MAMA] runSensor ok.");
   } else {

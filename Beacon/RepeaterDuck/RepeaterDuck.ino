@@ -10,6 +10,7 @@ const int INTERVAL_MS = 10000; // for sending the counter message
 #include <arduino-timer.h>
 #include <CDP.h>
 #include "FastLED.h"
+#include <DuckRadio.h>
 
 // Setup for W2812 (LED)
 #define LED_TYPE WS2812
@@ -39,6 +40,7 @@ bool runGPS(void *);
 
 // create a built-in mama duck
 MamaDuck duck;
+DuckRadio radio;
 
 // create a timer with default settings
 auto timer = timer_create_default();
@@ -72,7 +74,6 @@ void setup() {
 
   Serial.println("[MAMA] Setup OK!");
 }
-
 
 std::vector<byte> stringToByteVector(const String& str) {
     std::vector<byte> byteVec;
@@ -233,4 +234,9 @@ bool runGPS() {
   }
 
   return true;
+}
+
+void handleDuckData(std::vector<byte> packetBuffer) {
+  Serial.println("[MAMA] got packet: " + stringToByteVector(packetBuffer.data(), packetBuffer.size()));
+  processMessageFromDucks(packetBuffer);
 }
