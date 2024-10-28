@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tea Houses</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .form-container {
+        background-color: white;
+        border: 2px solid #ffa500;
+        border-radius: 10px;
+        padding: 20px;
+        width: 100%;
+        max-width: 300px;
+        box-sizing: border-box;
+      }
+      h1,
+      h2,
+      label {
+        color: #ffa500;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ffa500;
+        border-radius: 5px;
+      }
+      .quantity-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .quantity-control label {
+        flex: 1 1 60%;
+        margin-bottom: 5px;
+      }
+      .quantity-control div {
+        flex: 1 1 40%;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+      }
+      .quantity-control button {
+        background-color: white;
+        border: 1px solid #ffa500;
+        color: #ffa500;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .quantity-control span {
+        margin: 0 10px;
+      }
+      @media (max-width: 320px) {
+        .form-container {
+          padding: 10px;
+        }
+        h1 {
+          font-size: 1.5em;
+        }
+        h2 {
+          font-size: 1.2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="form-container">
+        <h1>TeaHouse Order Form</h1>
+        <form id="orderForm">
+          <input
+            type="text"
+            id="teahouse"
+            placeholder="Name of TeaHouse"
+            required
+          />
+          <input
+            type="text"
+            id="person"
+            placeholder="Name of Person"
+            required
+          />
+
+          <h2>Food</h2>
+          <div id="foodItems">
+            <div class="quantity-control">
+              <label for="meat">Meat</label>
+              <div>
+                <button type="button" onclick="updateQuantity('meat', -1)">
+                  -
+                </button>
+                <span id="meatQuantity">1</span>
+                <button type="button" onclick="updateQuantity('meat', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="chicken">Chicken</label>
+              <div>
+                <button type="button" onclick="updateQuantity('chicken', -1)">
+                  -
+                </button>
+                <span id="chickenQuantity">1</span>
+                <button type="button" onclick="updateQuantity('chicken', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="buff">Buff</label>
+              <div>
+                <button type="button" onclick="updateQuantity('buff', -1)">
+                  -
+                </button>
+                <span id="buffQuantity">1</span>
+                <button type="button" onclick="updateQuantity('buff', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="pork">Pork</label>
+              <div>
+                <button type="button" onclick="updateQuantity('pork', -1)">
+                  -
+                </button>
+                <span id="porkQuantity">1</span>
+                <button type="button" onclick="updateQuantity('pork', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="vegetables">Vegetables</label>
+              <div>
+                <button
+                  type="button"
+                  onclick="updateQuantity('vegetables', -1)"
+                >
+                  -
+                </button>
+                <span id="vegetablesQuantity">1</span>
+                <button type="button" onclick="updateQuantity('vegetables', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="bread">Bread</label>
+              <div>
+                <button type="button" onclick="updateQuantity('bread', -1)">
+                  -
+                </button>
+                <span id="breadQuantity">1</span>
+                <button type="button" onclick="updateQuantity('bread', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="quantity-control">
+              <label for="rice">Rice</label>
+              <div>
+                <button type="button" onclick="updateQuantity('rice', -1)">
+                  -
+                </button>
+                <span id="riceQuantity">1</span>
+                <button type="button" onclick="updateQuantity('rice', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <h2>Drinks</h2>
+          <div>
+            <input type="checkbox" id="tea" name="tea" />
+            <label for="tea">Tea</label><br />
+            <input type="checkbox" id="softDrinks" name="softDrinks" />
+            <label for="softDrinks">Soft Drinks</label><br />
+            <input type="checkbox" id="hardDrinks" name="hardDrinks" />
+            <label for="hardDrinks">Hard Drinks</label>
+          </div>
+
+          <h2>General Medicine</h2>
+          <div>
+            <input type="checkbox" id="paracetamol" name="paracetamol" />
+            <label for="paracetamol">Paracetamol</label><br />
+            <input type="checkbox" id="dimox" name="dimox" />
+            <label for="dimox">Dimox</label><br />
+            <input type="checkbox" id="oxygenCans" name="oxygenCans" />
+            <label for="oxygenCans">Oxygen Cans</label>
+          </div>
+
+          <h2>Other:</h2>
+          <textarea type="text" id="other" placeholder="Other items"></textarea>
+          <button type="submit" class="submit-button">Submit Order</button>
+        </form>
+        <div id="orderSummary"></div>
+      </div>
+    </div>
+    <script>
+      function updateQuantity(item, change) {
+        const quantityElement = document.getElementById(`${item}Quantity`);
+        let quantity = parseInt(quantityElement.textContent);
+        quantity = Math.max(0, quantity + change);
+        quantityElement.textContent = quantity;
+      }
+
+      document
+        .getElementById("orderForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const teahouse = document.getElementById("teahouse").value;
+          const person = document.getElementById("person").value;
+          const other = document.getElementById("other").value;
+
+          let orderSummary = `<h2>Order Summary</h2>`;
+          orderSummary += `<p><strong>TeaHouse:</strong> ${teahouse}</p>`;
+          orderSummary += `<p><strong>Person:</strong> ${person}</p>`;
+          orderSummary += `<h3>Food Items:</h3>`;
+
+          const foodItems = [
+            "meat",
+            "chicken",
+            "buff",
+            "pork",
+            "vegetables",
+            "bread",
+            "rice",
+          ];
+          foodItems.forEach((item) => {
+            const quantity = document.getElementById(
+              `${item}Quantity`
+            ).textContent;
+            if (parseInt(quantity) > 0) {
+              orderSummary += `<p>${item}: ${quantity}</p>`;
+            }
+          });
+
+          const drinks = [];
+          const medicines = [];
+
+          // Select all the checkboxes in each section by name prefix
+          const drinkCheckboxes = document.querySelectorAll(
+            'input[name="tea"], input[name="softDrinks"], input[name="hardDrinks"]'
+          );
+          const medicineCheckboxes = document.querySelectorAll(
+            'input[name="paracetamol"], input[name="dimox"], input[name="oxygenCans"]'
+          );
+
+          // Collect selected drinks
+          drinkCheckboxes.forEach((checkbox) => {
+            if (checkbox.checked) drinks.push(checkbox.name);
+          });
+
+          // Collect selected medicines
+          medicineCheckboxes.forEach((checkbox) => {
+            if (checkbox.checked) medicines.push(checkbox.name);
+          });
+
+          let resultText = "";
+
+          if (drinks.length)
+            resultText += `Selected Drinks: ${drinks.join(", ")}\n`;
+          if (medicines.length)
+            resultText += `Selected Medicines: ${medicines.join(", ")}`;
+
+          if (!resultText) resultText = "No items selected.";
+
+          orderSummary += resultText;
+
+          // other
+          if (other) {
+            orderSummary += `<h3>Other Items:</h3>`;
+            orderSummary += `<p>${other}</p>`;
+          }
+
+          const summaryElement = document.getElementById("orderSummary");
+          summaryElement.innerHTML = orderSummary;
+          summaryElement.style.display = "block";
+        });
+    </script>
+  </body>
+</html>
