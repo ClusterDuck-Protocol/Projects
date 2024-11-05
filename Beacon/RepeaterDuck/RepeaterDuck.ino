@@ -10,7 +10,7 @@ const int INTERVAL_MS = 10000; // for sending the counter message
 #include <arduino-timer.h>
 #include <CDP.h>
 #include "FastLED.h"
-#include <DuckRadio.h>
+// #include <DuckRadio.h>
 
 // Setup for W2812 (LED)
 #define LED_TYPE WS2812
@@ -40,7 +40,7 @@ bool runGPS(void *);
 
 // create a built-in mama duck
 MamaDuck duck;
-DuckRadio radio;
+// DuckRadio radio;
 
 // create a timer with default settings
 auto timer = timer_create_default();
@@ -65,6 +65,8 @@ void setup() {
     Serial.println("[MAMA] Failed to setup MamaDuck");
     return;
   }
+
+  duck.onReceiveDuckData(handleDuckData);
 
   // LED Complete
   leds[0] = CRGB::Green;
@@ -238,5 +240,20 @@ bool runGPS() {
 
 void handleDuckData(std::vector<byte> packetBuffer) {
   Serial.println("[MAMA] got packet: " + stringToByteVector(packetBuffer.data(), packetBuffer.size()));
-  processMessageFromDucks(packetBuffer);
+  std::string payload(packet.data.begin(), packet.data.end());
+  std::string sduid(packet.sduid.begin(), packet.sduid.end());
+  std::string dduid(packet.dduid.begin(), packet.dduid.end());
+
+  std::string muid(packet.muid.begin(), packet.muid.end());
+  std::string path(packet.path.begin(), packet.path.end());
+
+  Serial.println("[MAMA] Packet Received:");
+  Serial.println("[MAMA] sduid:   " + String(sduid.c_str()));
+  Serial.println("[MAMA] dduid:   " + String(dduid.c_str()));
+
+  Serial.println("[MAMA] muid:    " + String(muid.c_str()));
+  Serial.println("[MAMA] path:    " + String(path.c_str()));
+  Serial.println("[MAMA] data:    " + String(payload.c_str()));
+  Serial.println("[MAMA] hops:    " + String(packet.hopCount));
+  Serial.println("[MAMA] duck:    " + String(packet.duckType));
 }
