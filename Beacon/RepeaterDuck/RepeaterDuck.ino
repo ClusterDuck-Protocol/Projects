@@ -3,7 +3,7 @@
  * @brief Uses the built in Mama Duck.
  */
 
-std::string deviceId("REPEATR1"); // DuckID - NEEDS to be 8 characters
+std::string deviceId("REPEATR2"); // DuckID - NEEDS to be 8 characters
 const int INTERVAL_MS = 10000; // for sending the counter message
 
 #include <string>
@@ -25,18 +25,8 @@ CRGB leds[NUM_LEDS];
 #define Serial SERIAL_PORT_USBVIRTUAL
 #endif
 
-//GPS
-#include <TinyGPS++.h>
-TinyGPSPlus tgps;
-HardwareSerial GPS(1);
-
-//Telemetry
-#include <axp20x.h>
-AXP20X_Class axp;
-
 bool sendData(std::vector<byte> message, topics value);
-bool runSensor(void *);
-bool runGPS(void *);
+void handleDuckData(std::vector<byte> packetBuffer);
 
 // create a built-in mama duck
 MamaDuck duck;
@@ -45,8 +35,6 @@ MamaDuck duck;
 // create a timer with default settings
 auto timer = timer_create_default();
 
-
-int counter = 1;
 bool setupOK = false;
 
 void setup() {
@@ -99,147 +87,12 @@ void loop() {
   duck.run();
 }
 
-static void smartDelay(unsigned long ms)
-{
-  unsigned long start = millis();
-  do
-  {
-    while (GPS.available())
-      tgps.encode(GPS.read());
-  } while (millis() - start < ms);
-}
-
-// Getting GPS data
-String getGPSData() {
-
-  // Encoding the GPS
-  smartDelay(5000);
-  
-  // Printing the GPS data
-  Serial.println("[MAMA] --- GPS ---");
-  Serial.print("[MAMA] Latitude  : ");
-  Serial.println(tgps.location.lat(), 5);  
-  Serial.print("[MAMA] Longitude : ");
-  Serial.println(tgps.location.lng(), 4);
-  Serial.print("[MAMA] Altitude  : ");
-  Serial.print(tgps.altitude.feet() / 3.2808);
-  Serial.println("M");
-  Serial.print("[MAMA] Satellites: ");
-  Serial.println(tgps.satellites.value());
-  Serial.print("[MAMA] Time      : ");
-  Serial.print(tgps.time.hour());
-  Serial.print(":");
-  Serial.print(tgps.time.minute());
-  Serial.print(":");
-  Serial.println(tgps.time.second());
-  Serial.print("[MAMA] Speed     : ");
-  Serial.println(tgps.speed.kmph());
-  Serial.println("[MAMA] **********************");
-  
-  // Creating a message of the Latitude and Longitude
-  String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808);
-
-  // Check to see if GPS data is being received
-  if (millis() > 5000 && tgps.charsProcessed() < 10)
-  {
-    Serial.println(F("[MAMA] No GPS data received: check wiring"));
-  }
-
-  return sensorVal;
-}
-
-bool runSensor(void *) {
-  bool result;
-
-  String batteryData = getBatteryData();
-
-  String gpsData = getGPSData();
-
-  String healthMessage = String("Counter:") + String(counter)+ " " +String("FreeMemory:") + String(freeMemory())+ " " +batteryData + " "+ gpsData;
-  Serial.print("[MAMA] sensor data: ");
-  Serial.println(healthMessage);
-
-  result = sendData(stringToByteVector(healthMessage), health);
-  if (result) {
-     Serial.println("[MAMA] runSensor ok.");
-  } else {
-     Serial.println("[MAMA] runSensor failed.");
-  }
-
-  return result;
-}
-
-bool sendData(std::vector<byte> message, topics value) {
-  bool sentOk = false;
-  
-  int err = duck.sendData(value, message);
-  if (err == DUCK_ERR_NONE) {
-     counter++;
-     sentOk = true;
-  }
-  if (!sentOk) {
-    Serial.println("[MAMA] Failed to send data. error = " + String(err));
-  }
-  return sentOk;
-}
-
-// Getting the battery data
-String getBatteryData() {
-  
-  int isCharging = axp.isChargeing();
-  boolean isFullyCharged = axp.isChargingDoneIRQ();
-  float batteryVoltage = axp.getBattVoltage();
-  float batteryDischarge = axp.getAcinCurrent();
-  float getTemp = axp.getTemp();  
-  float battPercentage = axp.getBattPercentage();
-   
-  Serial.println("[MAMA] --- Power ---");
-  Serial.print("[MAMA] Duck charging (1 = Yes): ");
-  Serial.println(isCharging);
-  Serial.print("[MAMA] Fully Charged: ");
-  Serial.println(isFullyCharged);
-  Serial.print("[MAMA] Battery Voltage: ");
-  Serial.println(batteryVoltage);
-  Serial.print("[MAMA] Battery Discharge: ");
-  Serial.println(batteryDischarge);  
-  Serial.print("[MAMA] Battery Percentage: ");
-  Serial.println(battPercentage);
-  Serial.print("[MAMA] Board Temperature: ");
-  Serial.println(getTemp);
-   
-  String sensorVal = 
-  "Charging:" + 
-  String(isCharging) +  
-  " Full:" +
-  String(isFullyCharged)+
-  " Volts:" +
-  String(batteryVoltage) + 
-  " Temp:" +
-  String(getTemp);
-
-  return sensorVal;
-}
-
-bool runGPS() {
-  
-  bool result;
-  String sensorVal = getGPSData();
-
-  Serial.print("[MAMA] sensor data: ");
-  Serial.println(sensorVal);
-
-  result = sendData(stringToByteVector(sensorVal), location);
-  if (result) {
-     Serial.println("[MAMA] runGPS ok.");
-  } else {
-     Serial.println("[MAMA] runGPS failed.");
-  }
-
-  return true;
-}
-
 void handleDuckData(std::vector<byte> packetBuffer) {
-  Serial.println("[MAMA] got packet: " + stringToByteVector(packetBuffer.data(), packetBuffer.size()));
+  
+  Serial.println("Hello before cdpPacket!");
+  CdpPacket packet = CdpPacket(packetBuffer);
+  Serial.println("Hello!");
+  
   std::string payload(packet.data.begin(), packet.data.end());
   std::string sduid(packet.sduid.begin(), packet.sduid.end());
   std::string dduid(packet.dduid.begin(), packet.dduid.end());
