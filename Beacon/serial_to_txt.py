@@ -19,10 +19,11 @@ gps_pattern = r'GPS:\s*Lat:\s*([\d\.\-]+)\s*Lng:\s*([\d\.\-]+)\s*Alt:\s*([\d\.\-
 csv_file = 'clusterdata.csv'
 headers = ['timestamp', 'rssi', 'snr', 'sduid', 'muid', 'data', 'hops', 'latitude', 'longitude', 'altitude', 'gps_time']
 
-# Create the CSV file and write the headers if it doesn't exist
-with open(csv_file, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(headers)  # Write headers
+# Check if the file exists; if not, create it and write the headers
+if not os.path.exists(csv_file):
+    with open(csv_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)  # Write headers if the file doesn't exist
 
 def save_to_csv_file(output_file, data_dict):
     """
@@ -53,6 +54,7 @@ def save_to_csv_file(output_file, data_dict):
             data_dict.get('gps_time', '')
         ]
         writer.writerow(row)
+
 
 try:
     # Buffer to hold the extracted data

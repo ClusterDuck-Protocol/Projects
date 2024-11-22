@@ -103,7 +103,7 @@ bool runSensor(void *) {
 
   String gpsData = getGPSData();
 
-  String statusMessage = String("QUACK QUACK QUACK QUACK") + " " + gpsData;
+  String statusMessage = String("QUACK") + " " + gpsData;
   Serial.print("[MAMA] status data: ");
   Serial.println(statusMessage);
 
