@@ -1,10 +1,10 @@
 /**
  * @file BeaconDuck.ino
- * @brief A MamaDuck that sends the message "QUACK QUACK QUACK QUACK" repeatedly.
+ * @brief A DuckLink that sends the message "QUACK QUACK QUACK QUACK" repeatedly.
  */
 
 std::string deviceId("QUACKER1"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 30000; // for sending the counter message
+const int INTERVAL_MS = 15000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
@@ -35,8 +35,8 @@ bool runGPS(void *);
 String getGPSData();
 static void smartDelay(unsigned long ms);
 
-// create a built-in mama duck
-MamaDuck duck;
+// create a built-in DuckLink
+DuckLink duck;
 
 // create a timer with default settings
 auto timer = timer_create_default();
@@ -56,7 +56,7 @@ void setup() {
   devId.insert(devId.end(), deviceId.begin(), deviceId.end());
   
   if (duck.setupWithDefaults(devId) != DUCK_ERR_NONE) {
-    Serial.println("[MAMA] Failed to setup MamaDuck");
+    Serial.println("[DUCKLINK] Failed to setup DuckLink");
     return;
   }
 
@@ -72,7 +72,7 @@ void setup() {
 
   setupOK = true;
 
-  Serial.println("[MAMA] Setup OK!");
+  Serial.println("[DuckLink] Setup OK!");
 }
 
 std::vector<byte> stringToByteVector(const String& str) {
@@ -104,14 +104,14 @@ bool runSensor(void *) {
   String gpsData = getGPSData();
 
   String statusMessage = String("QUACK") + " " + gpsData;
-  Serial.print("[MAMA] status data: ");
+  Serial.print("[DuckLink] status data: ");
   Serial.println(statusMessage);
 
   result = sendData(stringToByteVector(statusMessage), location);
   if (result) {
-     Serial.println("[MAMA] runSensor ok.");
+     Serial.println("[DuckLink] runSensor ok.");
   } else {
-     Serial.println("[MAMA] runSensor failed.");
+     Serial.println("[DuckLink] runSensor failed.");
   }
 
   return result;
@@ -126,7 +126,7 @@ bool sendData(std::vector<byte> message, topics value) {
      sentOk = true;
   }
   if (!sentOk) {
-    Serial.println("[MAMA] Failed to send data. error = " + String(err));
+    Serial.println("[DuckLink] Failed to send data. error = " + String(err));
   }
   return sentOk;
 }
@@ -148,25 +148,25 @@ String getGPSData() {
   smartDelay(5000);
   
   // Printing the GPS data
-  Serial.println("[MAMA] --- GPS ---");
-  Serial.print("[MAMA] Latitude  : ");
+  Serial.println("[DuckLink] --- GPS ---");
+  Serial.print("[DuckLink] Latitude  : ");
   Serial.println(tgps.location.lat(), 5);  
-  Serial.print("[MAMA] Longitude : ");
+  Serial.print("[DuckLink] Longitude : ");
   Serial.println(tgps.location.lng(), 4);
-  Serial.print("[MAMA] Altitude  : ");
+  Serial.print("[DuckLink] Altitude  : ");
   Serial.print(tgps.altitude.feet() / 3.2808);
   Serial.println("M");
-  Serial.print("[MAMA] Satellites: ");
+  Serial.print("[DuckLink] Satellites: ");
   Serial.println(tgps.satellites.value());
-  Serial.print("[MAMA] Time      : ");
+  Serial.print("[DuckLink] Time      : ");
   Serial.print(tgps.time.hour());
   Serial.print(":");
   Serial.print(tgps.time.minute());
   Serial.print(":");
   Serial.println(tgps.time.second());
-  Serial.print("[MAMA] Speed     : ");
+  Serial.print("[DuckLink] Speed     : ");
   Serial.println(tgps.speed.kmph());
-  Serial.println("[MAMA] **********************");
+  Serial.println("[DuckLink] **********************");
   
   // Creating a message of the Latitude and Longitude
   String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808) + " Time: " + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
@@ -174,7 +174,7 @@ String getGPSData() {
   // Check to see if GPS data is being received
   if (millis() > 5000 && tgps.charsProcessed() < 10)
   {
-    Serial.println(F("[MAMA] No GPS data received: check wiring"));
+    Serial.println(F("[DuckLink] No GPS data received: check wiring"));
   }
 
   return sensorVal;

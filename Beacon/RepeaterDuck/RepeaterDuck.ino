@@ -3,8 +3,8 @@
  * @brief Uses the built in Mama Duck.
  */
 
-std::string deviceId("REPEATR4"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 30000; // for sending the counter message
+std::string deviceId("REPEATR3"); // DuckID - NEEDS to be 8 characters
+const int INTERVAL_MS = 2000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
