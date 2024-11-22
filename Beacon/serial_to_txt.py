@@ -1,18 +1,10 @@
-# Imports
 import serial
-import json
 import re
+import csv
 from time import gmtime, strftime
-import argparse
-
-# # Parse command-line arguments
-# parser = argparse.ArgumentParser(description="Serial port data logger")
-# parser.add_argument("serial_port", type=str, help="Serial port to connect to (e.g., /dev/cu.usbserial-52780144351)")
-# # parser.add_argument("output_file", type=str, help="Output text file to save data")
-# args = parser.parse_args()
 
 # Set up the serial monitor
-ser = serial.Serial('/dev/cu.wchusbserial57700020231', 115200)
+ser = serial.Serial('/dev/cu.wchusbserial52780149881', 115200)
 ser.flushInput()
 
 # Regular expressions to capture the required fields
@@ -20,67 +12,106 @@ rssi_snr_pattern = r'rssi: ([\-\d\.]+) snr: ([\d\.]+)'
 sduid_pattern = r'sduid: (.+)'
 muid_pattern = r'muid: (.+)'
 data_pattern = r'data: (.+)'
+hops_pattern = r'hops:\s*(\d+)'
+gps_pattern = r'GPS:\s*Lat:\s*([\d\.\-]+)\s*Lng:\s*([\d\.\-]+)\s*Alt:\s*([\d\.\-]+)\s*Time:\s*([\d:]+)'
 
-def save_to_text_file(output_file, json_str):
+# CSV file setup
+csv_file = 'clusterdata.csv'
+headers = ['timestamp', 'rssi', 'snr', 'sduid', 'muid', 'data', 'hops', 'latitude', 'longitude', 'altitude', 'gps_time']
+
+# Create the CSV file and write the headers if it doesn't exist
+with open(csv_file, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(headers)  # Write headers
+
+def save_to_csv_file(output_file, data_dict):
     """
-    Function to save extracted data into a text file.
+    Save extracted data into a CSV file.
 
     Parameters:
     -----------
     output_file: The file to save data to
-    rssi: The Received Signal Strength Indicator
-    snr: The Signal-to-Noise Ratio
-    fe: Frequency error
-    size: Size of packet
-    json_data: JSON data consisting of the payload data
+    data_dict: A dictionary containing extracted values
 
     Return:
     -------
     Nothing
     """
-    with open(output_file, 'a') as f:
-        timestamp = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-        data_line = f"{timestamp}, {json_str}\n"
-        f.write(data_line)
+    with open(output_file, 'a', newline='') as f:
+        writer = csv.writer(f)
+        row = [
+            data_dict.get('timestamp', ''),
+            data_dict.get('rssi', ''),
+            data_dict.get('snr', ''),
+            data_dict.get('sduid', ''),
+            data_dict.get('muid', ''),
+            data_dict.get('data', ''),
+            data_dict.get('hops', ''),
+            data_dict.get('latitude', ''),
+            data_dict.get('longitude', ''),
+            data_dict.get('altitude', ''),
+            data_dict.get('gps_time', '')
+        ]
+        writer.writerow(row)
 
 try:
-    finish = False
-    json_lines = []
+    # Buffer to hold the extracted data
+    data_buffer = {}
+
     while True:
+        # Read and decode a line from the serial port
         line = ser.readline().decode('utf-8').strip()
-        print(line)
-        # Find rssi and snr
+        print(f"DEBUG: {line}")  # Debug: print the line being processed
+
+        # Match patterns and update the data buffer
         rssi_snr_match = re.search(rssi_snr_pattern, line)
         sduid_match = re.search(sduid_pattern, line)
         muid_match = re.search(muid_pattern, line)
         data_match = re.search(data_pattern, line)
-        
+        hops_match = re.search(hops_pattern, line)
+        gps_match = re.search(gps_pattern, line)
+
         if rssi_snr_match:
-            rssi = rssi_snr_match.group(1).strip()
-            snr = rssi_snr_match.group(2).strip()
-            print(f"RSSI: {rssi}, SNR: {snr}")
-            json_lines.append(rssi)
-            json_lines.append(snr)
-        elif sduid_match:
-            sduid = sduid_match.group(1).strip()
-            print(f"SDUID: {sduid}")
-            json_lines.append(sduid)
-        elif muid_match:
-            muid = muid_match.group(1).strip()
-            print(f"MUID: {muid}")
-            json_lines.append(muid)     
-        elif data_match:
-            data = data_match.group(1).strip()
-            print(f"Data: {data}")
-            json_lines.append(data)
-            finish = True
-        
-        if finish:
-            json_str = ','.join(json_lines)
-            # Save data to the text file
-            save_to_text_file('clusterdata.txt', json_str)
-            finish = False
-            json_lines = []
+            data_buffer['rssi'] = rssi_snr_match.group(1).strip()
+            data_buffer['snr'] = rssi_snr_match.group(2).strip()
+            print(f"DEBUG: RSSI: {data_buffer['rssi']}, SNR: {data_buffer['snr']}")
+
+        if sduid_match:
+            data_buffer['sduid'] = sduid_match.group(1).strip()
+            print(f"DEBUG: SDUID: {data_buffer['sduid']}")
+
+        if muid_match:
+            data_buffer['muid'] = muid_match.group(1).strip()
+            print(f"DEBUG: MUID: {data_buffer['muid']}")
+
+        if data_match:
+            data_buffer['data'] = data_match.group(1).strip()
+            print(f"DEBUG: Data: {data_buffer['data']}")
+
+        if hops_match:
+            data_buffer['hops'] = hops_match.group(1)
+            print(f"DEBUG: Hops: {data_buffer['hops']}")
+
+        if gps_match:
+            data_buffer['latitude'] = gps_match.group(1)
+            data_buffer['longitude'] = gps_match.group(2)
+            data_buffer['altitude'] = gps_match.group(3)
+            data_buffer['gps_time'] = gps_match.group(4)
+            print(f"DEBUG: GPS - Latitude: {data_buffer['latitude']}, Longitude: {data_buffer['longitude']}, Altitude: {data_buffer['altitude']}, Time: {data_buffer['gps_time']}")
+
+        # Save data when all fields are captured
+        if 'rssi' in data_buffer and 'sduid' in data_buffer and 'muid' in data_buffer and \
+           'data' in data_buffer and 'hops' in data_buffer and 'latitude' in data_buffer:
+            # Add a timestamp
+            data_buffer['timestamp'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+
+            # Save to CSV
+            save_to_csv_file(csv_file, data_buffer)
+            print("DEBUG: Data saved:", data_buffer)
+
+            # Clear the buffer for the next set of data
+            data_buffer = {}
+
 except KeyboardInterrupt:
     print("Program terminated by user")
 finally:

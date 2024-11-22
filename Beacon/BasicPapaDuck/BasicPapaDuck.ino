@@ -11,6 +11,7 @@
  */
 
 #include <CDP.h>
+#include "FastLED.h"
 
 #include <ArduinoJson.h>
 #include <arduino-timer.h>
@@ -20,14 +21,32 @@
 #include <iomanip>
 #include <sstream>
 
+// Setup for W2812 (LED)
+#define LED_TYPE WS2812
+#define DATA_PIN 4
+#define NUM_LEDS 1
+#define COLOR_ORDER GRB
+#define BRIGHTNESS  128
+#include <pixeltypes.h>
+CRGB leds[NUM_LEDS];
+
+#ifdef SERIAL_PORT_USBVIRTUAL
+#define Serial SERIAL_PORT_USBVIRTUAL
+#endif
+
+//GPS
+#include <TinyGPS++.h>
+TinyGPSPlus tgps;
+HardwareSerial GPS(1);
 
 std::string toTopicString(byte topic);
 String convertToHex(byte* data, int size);
 int toJSON(CdpPacket packet);
+static void smartDelay(unsigned long ms);
+String getGPSData();
 
-
-const int bufferSize = 4 * JSON_OBJECT_SIZE(4);
-StaticJsonDocument<bufferSize> doc;
+// const int bufferSize = 4 * JSON_OBJECT_SIZE(4);
+JsonDocument doc;
 
 bool setupOK = false;
 
@@ -104,6 +123,8 @@ String convertToHex(byte* data, int size)
 
 int toJSON(CdpPacket packet) 
 {
+
+  String gpsData = getGPSData();
   
   std::stringstream ss;
 
@@ -135,6 +156,8 @@ int toJSON(CdpPacket packet)
   doc["hops"].set(packet.hopCount);
   doc["duckType"].set(packet.duckType);
 
+  Serial.println("[PAPA] GPS:     " + gpsData);
+
   String jsonstat;
   serializeJson(doc, jsonstat);
   serializeJsonPretty(doc, Serial);
@@ -157,7 +180,14 @@ void handleDuckData(std::vector<byte> packetBuffer)
 
 void setup() 
 {
-  std::string deviceId("PAPADUCK");
+  
+  // LED Intial
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalSMD5050 );
+  FastLED.setBrightness(  BRIGHTNESS );
+  leds[0] = CRGB::Red;
+  FastLED.show();
+
+  std::string deviceId("PAPA0009");
   std::vector<byte> devId;
   devId.insert(devId.end(), deviceId.begin(), deviceId.end());
   if (duck.setupWithDefaults(devId) != DUCK_ERR_NONE) {
@@ -165,11 +195,20 @@ void setup()
     setupOK = false;
     return;
   }
-  setupOK = true;
+  
+  //Setup GPS
+  GPS.begin(9600, SERIAL_8N1, 34, 12);
+
   // register a callback to handle incoming data from duck in the network
   duck.onReceiveDuckData(handleDuckData);
 
+  setupOK = true;
+
   Serial.println("[PAPA] Setup OK! ");
+
+  // LED Complete
+  leds[0] = CRGB::Green;
+  FastLED.show();
 
   duck.enableAcks(false);
 }
@@ -181,4 +220,53 @@ void loop()
   }
   duck.run();
   timer.tick();
+}
+
+static void smartDelay(unsigned long ms)
+{
+  unsigned long start = millis();
+  do
+  {
+    while (GPS.available())
+      tgps.encode(GPS.read());
+  } while (millis() - start < ms);
+}
+
+// Getting GPS data
+String getGPSData() {
+
+  // Encoding the GPS
+  smartDelay(5000);
+  
+  // Printing the GPS data
+  Serial.println("[MAMA] --- GPS ---");
+  Serial.print("[MAMA] Latitude  : ");
+  Serial.println(tgps.location.lat(), 5);  
+  Serial.print("[MAMA] Longitude : ");
+  Serial.println(tgps.location.lng(), 4);
+  Serial.print("[MAMA] Altitude  : ");
+  Serial.print(tgps.altitude.feet() / 3.2808);
+  Serial.println("M");
+  Serial.print("[MAMA] Satellites: ");
+  Serial.println(tgps.satellites.value());
+  Serial.print("[MAMA] Time      : ");
+  Serial.print(tgps.time.hour());
+  Serial.print(":");
+  Serial.print(tgps.time.minute());
+  Serial.print(":");
+  Serial.println(tgps.time.second());
+  Serial.print("[MAMA] Speed     : ");
+  Serial.println(tgps.speed.kmph());
+  Serial.println("[MAMA] **********************");
+  
+  // Creating a message of the Latitude and Longitude
+  String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808) + " Time: " + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
+
+  // Check to see if GPS data is being received
+  if (millis() > 5000 && tgps.charsProcessed() < 10)
+  {
+    Serial.println(F("[MAMA] No GPS data received: check wiring"));
+  }
+
+  return sensorVal;
 }

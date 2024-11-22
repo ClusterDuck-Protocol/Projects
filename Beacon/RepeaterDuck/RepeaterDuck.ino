@@ -89,9 +89,7 @@ void loop() {
 
 void handleDuckData(std::vector<byte> packetBuffer) {
   
-  Serial.println("Hello before cdpPacket!");
   CdpPacket packet = CdpPacket(packetBuffer);
-  Serial.println("Hello!");
   
   std::string payload(packet.data.begin(), packet.data.end());
   std::string sduid(packet.sduid.begin(), packet.sduid.end());
