@@ -3,8 +3,8 @@
  * @brief Uses the built in Mama Duck.
  */
 
-std::string deviceId("REPEATR2"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 10000; // for sending the counter message
+std::string deviceId("REPEATR1"); // DuckID - NEEDS to be 8 characters
+const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
@@ -43,6 +43,7 @@ MamaDuck duck;
 auto timer = timer_create_default();
 
 bool setupOK = false;
+int counter = 1;
 
 void setup() {
   
@@ -66,6 +67,9 @@ void setup() {
   //Setup GPS
   GPS.begin(9600, SERIAL_8N1, 34, 12);
 
+  // Initialize the timer for telemetry
+  timer.every(INTERVAL_MS, runSensor);
+  
   // LED Complete
   leds[0] = CRGB::Green;
   FastLED.show();
@@ -117,6 +121,40 @@ void handleDuckData(std::vector<byte> packetBuffer) {
   Serial.println("[MAMA] data:    " + String(payload.c_str()));
   Serial.println("[MAMA] hops:    " + String(packet.hopCount));
   Serial.println("[MAMA] duck:    " + String(packet.duckType));
+}
+
+bool runSensor(void *) {
+  
+  bool result;
+
+  String gpsData = getGPSData();
+
+  String statusMessage = String("C:") + String(counter) +" " + gpsData;
+  Serial.print("[MAMA] status data: ");
+  Serial.println(statusMessage);
+
+  result = sendData(stringToByteVector(statusMessage), location);
+  if (result) {
+     Serial.println("[MAMA] runSensor ok.");
+  } else {
+     Serial.println("[MAMA] runSensor failed.");
+  }
+
+  return result;
+}
+
+bool sendData(std::vector<byte> message, topics value) {
+  bool sentOk = false;
+  
+  int err = duck.sendData(value, message);
+  if (err == DUCK_ERR_NONE) {
+     counter++;
+     sentOk = true;
+  }
+  if (!sentOk) {
+    Serial.println("[MAMA] Failed to send data. error = " + String(err));
+  }
+  return sentOk;
 }
 
 static void smartDelay(unsigned long ms)
