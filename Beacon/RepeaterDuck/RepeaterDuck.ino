@@ -25,8 +25,15 @@ CRGB leds[NUM_LEDS];
 #define Serial SERIAL_PORT_USBVIRTUAL
 #endif
 
+//GPS
+#include <TinyGPS++.h>
+TinyGPSPlus tgps;
+HardwareSerial GPS(1);
+
 bool sendData(std::vector<byte> message, topics value);
 void handleDuckData(std::vector<byte> packetBuffer);
+static void smartDelay(unsigned long ms);
+String getGPSData();
 
 // create a built-in mama duck
 MamaDuck duck;
@@ -55,6 +62,9 @@ void setup() {
   }
 
   duck.onReceiveDuckData(handleDuckData);
+
+  //Setup GPS
+  GPS.begin(9600, SERIAL_8N1, 34, 12);
 
   // LED Complete
   leds[0] = CRGB::Green;
@@ -107,4 +117,53 @@ void handleDuckData(std::vector<byte> packetBuffer) {
   Serial.println("[MAMA] data:    " + String(payload.c_str()));
   Serial.println("[MAMA] hops:    " + String(packet.hopCount));
   Serial.println("[MAMA] duck:    " + String(packet.duckType));
+}
+
+static void smartDelay(unsigned long ms)
+{
+  unsigned long start = millis();
+  do
+  {
+    while (GPS.available())
+      tgps.encode(GPS.read());
+  } while (millis() - start < ms);
+}
+
+// Getting GPS data
+String getGPSData() {
+
+  // Encoding the GPS
+  smartDelay(5000);
+  
+  // Printing the GPS data
+  Serial.println("[MAMA] --- GPS ---");
+  Serial.print("[MAMA] Latitude  : ");
+  Serial.println(tgps.location.lat(), 5);  
+  Serial.print("[MAMA] Longitude : ");
+  Serial.println(tgps.location.lng(), 4);
+  Serial.print("[MAMA] Altitude  : ");
+  Serial.print(tgps.altitude.feet() / 3.2808);
+  Serial.println("M");
+  Serial.print("[MAMA] Satellites: ");
+  Serial.println(tgps.satellites.value());
+  Serial.print("[MAMA] Time      : ");
+  Serial.print(tgps.time.hour());
+  Serial.print(":");
+  Serial.print(tgps.time.minute());
+  Serial.print(":");
+  Serial.println(tgps.time.second());
+  Serial.print("[MAMA] Speed     : ");
+  Serial.println(tgps.speed.kmph());
+  Serial.println("[MAMA] **********************");
+  
+  // Creating a message of the Latitude and Longitude
+  String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808) + " Time: " + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
+
+  // Check to see if GPS data is being received
+  if (millis() > 5000 && tgps.charsProcessed() < 10)
+  {
+    Serial.println(F("[MAMA] No GPS data received: check wiring"));
+  }
+
+  return sensorVal;
 }
