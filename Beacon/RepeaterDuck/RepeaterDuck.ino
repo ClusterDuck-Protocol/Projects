@@ -3,7 +3,7 @@
  * @brief Uses the built in Mama Duck.
  */
 
-std::string deviceId("REPEATR1"); // DuckID - NEEDS to be 8 characters
+std::string deviceId("REPEATR4"); // DuckID - NEEDS to be 8 characters
 const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
