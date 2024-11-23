@@ -187,7 +187,7 @@ void setup()
   leds[0] = CRGB::Red;
   FastLED.show();
 
-  std::string deviceId("PAPA0012");
+  std::string deviceId("PAPA0004");
   std::vector<byte> devId;
   devId.insert(devId.end(), deviceId.begin(), deviceId.end());
   if (duck.setupWithDefaults(devId) != DUCK_ERR_NONE) {

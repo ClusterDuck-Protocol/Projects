@@ -3,8 +3,8 @@
  * @brief Uses the built in Mama Duck.
  */
 
-std::string deviceId("REPEATR3"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 2000; // for sending the counter message
+std::string deviceId("REPEATR1"); // DuckID - NEEDS to be 8 characters
+const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
@@ -33,7 +33,7 @@ HardwareSerial GPS(1);
 bool sendData(std::vector<byte> message, topics value);
 void handleDuckData(std::vector<byte> packetBuffer);
 static void smartDelay(unsigned long ms);
-String getGPSData();
+std::string getGPSData();
 
 // create a built-in mama duck
 MamaDuck duck;
@@ -68,7 +68,7 @@ void setup() {
   GPS.begin(9600, SERIAL_8N1, 34, 12);
 
   // Initialize the timer for telemetry
-  timer.every(INTERVAL_MS, runSensor);
+  // timer.every(INTERVAL_MS, runSensor);
   
   // LED Complete
   leds[0] = CRGB::Green;
@@ -103,6 +103,8 @@ void loop() {
 
 void handleDuckData(std::vector<byte> packetBuffer) {
   
+  duck.setGPS(getGPSData());
+
   CdpPacket packet = CdpPacket(packetBuffer);
   
   std::string payload(packet.data.begin(), packet.data.end());
@@ -121,26 +123,6 @@ void handleDuckData(std::vector<byte> packetBuffer) {
   Serial.println("[MAMA] data:    " + String(payload.c_str()));
   Serial.println("[MAMA] hops:    " + String(packet.hopCount));
   Serial.println("[MAMA] duck:    " + String(packet.duckType));
-}
-
-bool runSensor(void *) {
-  
-  bool result;
-
-  String gpsData = getGPSData();
-
-  String statusMessage = String("C:") + String(counter) +" " + gpsData;
-  Serial.print("[MAMA] status data: ");
-  Serial.println(statusMessage);
-
-  result = sendData(stringToByteVector(statusMessage), location);
-  if (result) {
-     Serial.println("[MAMA] runSensor ok.");
-  } else {
-     Serial.println("[MAMA] runSensor failed.");
-  }
-
-  return result;
 }
 
 bool sendData(std::vector<byte> message, topics value) {
@@ -168,7 +150,7 @@ static void smartDelay(unsigned long ms)
 }
 
 // Getting GPS data
-String getGPSData() {
+std::string getGPSData() {
 
   // Encoding the GPS
   smartDelay(5000);
@@ -195,7 +177,7 @@ String getGPSData() {
   Serial.println("[MAMA] **********************");
   
   // Creating a message of the Latitude and Longitude
-  String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808) + " Time: " + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
+  String sensorVal = "Lt:" + String(tgps.location.lat(), 5) + " Lg:" + String(tgps.location.lng(), 4) + " At:" + String(tgps.altitude.feet() / 3.2808) + " TM:" + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
 
   // Check to see if GPS data is being received
   if (millis() > 5000 && tgps.charsProcessed() < 10)
@@ -203,5 +185,5 @@ String getGPSData() {
     Serial.println(F("[MAMA] No GPS data received: check wiring"));
   }
 
-  return sensorVal;
+  return sensorVal.c_str();
 }

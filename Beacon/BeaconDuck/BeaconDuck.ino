@@ -3,8 +3,8 @@
  * @brief A DuckLink that sends the message "QUACK QUACK QUACK QUACK" repeatedly.
  */
 
-std::string deviceId("QUACKER1"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 15000; // for sending the counter message
+std::string deviceId("BEACON01"); // DuckID - NEEDS to be 8 characters
+const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
@@ -169,7 +169,7 @@ String getGPSData() {
   Serial.println("[DuckLink] **********************");
   
   // Creating a message of the Latitude and Longitude
-  String sensorVal = "Lat:" + String(tgps.location.lat(), 5) + " Lng:" + String(tgps.location.lng(), 4) + " Alt:" + String(tgps.altitude.feet() / 3.2808) + " Time: " + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
+  String sensorVal = "Lt:" + String(tgps.location.lat(), 5) + " Lg:" + String(tgps.location.lng(), 4) + " At:" + String(tgps.altitude.feet() / 3.2808) + " Tm:" + String(tgps.time.hour())+":"+String(tgps.time.minute())+":"+String(tgps.time.second());
 
   // Check to see if GPS data is being received
   if (millis() > 5000 && tgps.charsProcessed() < 10)
