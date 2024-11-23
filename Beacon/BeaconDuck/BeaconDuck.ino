@@ -3,7 +3,7 @@
  * @brief A DuckLink that sends the message "QUACK QUACK QUACK QUACK" repeatedly.
  */
 
-std::string deviceId("BEACON01"); // DuckID - NEEDS to be 8 characters
+std::string deviceId("QUACKER1"); // DuckID - NEEDS to be 8 characters
 const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
@@ -103,7 +103,7 @@ bool runSensor(void *) {
 
   String gpsData = getGPSData();
 
-  String statusMessage = String("QUACK") + " " + gpsData;
+  String statusMessage = gpsData;
   Serial.print("[DuckLink] status data: ");
   Serial.println(statusMessage);
 
