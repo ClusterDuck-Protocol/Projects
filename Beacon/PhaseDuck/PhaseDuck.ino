@@ -3,14 +3,16 @@
  * @brief A DuckLink that sends the message "QUACK QUACK QUACK QUACK" repeatedly.
  */
 
-std::string deviceId("BEACON01"); // DuckID - NEEDS to be 8 characters
-const int INTERVAL_MS = 10000; // for sending the counter message
+std::string deviceId("BEACON03"); // DuckID - NEEDS to be 8 characters
+const int INTERVAL_MS = 30000; // for sending the counter message
 
 #include <string>
 #include <arduino-timer.h>
 #include <CDP.h>
 #include "FastLED.h"
 
+#define FIRST_SECOND 15
+#define SECOND_SECOND 45
 // Setup for W2812 (LED)
 #define LED_TYPE WS2812
 #define DATA_PIN 4
@@ -30,10 +32,11 @@ TinyGPSPlus tgps;
 HardwareSerial GPS(1);
 
 bool sendData(std::vector<byte> message, topics value);
-bool runSensor(void *);
+void runSensor();
 bool runGPS(void *);
 String getGPSData();
 static void smartDelay(unsigned long ms);
+void getGPSSeconds(int *hour, int *minute, int *second);
 
 // create a built-in DuckLink
 DuckLink duck;
@@ -43,6 +46,10 @@ auto timer = timer_create_default();
 
 int counter = 1;
 bool setupOK = false;
+int prevSeconds = 0;
+int prevMinute = 0;
+int prevHour = 0;
+int lastSet = 0;
 
 void setup() {
   // LED Intial
@@ -63,12 +70,14 @@ void setup() {
   //Setup GPS
   GPS.begin(9600, SERIAL_8N1, 34, 12);
 
-  // Initialize the timer for telemetry
-  timer.every(INTERVAL_MS, runSensor);
+  // // Initialize the timer for telemetry
+  // timer.every(INTERVAL_MS, runSensor);
 
   // LED Complete
   leds[0] = CRGB::Gold;
   FastLED.show();
+
+  lastSet = 1;
 
   setupOK = true;
 
@@ -90,14 +99,28 @@ void loop() {
   if (!setupOK) {
     return; 
   }
-  timer.tick();
-  // Use the default run(). The Mama duck is designed to also forward data it receives
-  // from other ducks, across the network. It has a basic routing mechanism built-in
-  // to prevent messages from hoping endlessly.
-  duck.run();
+  // timer.tick();
+  // // Use the default run(). The Mama duck is designed to also forward data it receives
+  // // from other ducks, across the network. It has a basic routing mechanism built-in
+  // // to prevent messages from hoping endlessly.
+  // duck.run();
+  int currSecond = 0;
+  int currMinute = 0;
+  int currHour = 0;
+
+  getGPSSeconds(&currHour, &currMinute, &currSecond);
+  if ((currSecond == FIRST_SECOND && (lastSet==1 || ((currSecond != prevSeconds) && (currMinute != prevMinute)))) 
+  || (currSecond == SECOND_SECOND && (lastSet==0 || ((currSecond != prevSeconds) && (currMinute != prevMinute))))) {
+      prevSeconds = currSecond;
+      prevMinute = currMinute;
+      prevHour = currHour;
+      lastSet = lastSet ^ 0x01;
+      runSensor();
+
+  }
 }
 
-bool runSensor(void *) {
+void runSensor() {
   
   bool result;
 
@@ -109,12 +132,16 @@ bool runSensor(void *) {
 
   result = sendData(stringToByteVector(statusMessage), location);
   if (result) {
-     Serial.println("[DuckLink] runSensor ok.");
+    Serial.println("[DuckLink] runSensor ok.");
+    int starttime = millis();
+    while (millis() - starttime < 1100 ) {
+      // WAIT MOTHER FUKKKKKer
+    }
   } else {
      Serial.println("[DuckLink] runSensor failed.");
   }
 
-  return result;
+  // return result;
 }
 
 bool sendData(std::vector<byte> message, topics value) {
@@ -143,10 +170,14 @@ static void smartDelay(unsigned long ms)
 
 // Getting GPS data
 String getGPSData() {
-
-  // Encoding the GPS
-  smartDelay(5000);
   
+  while(!GPS.available())
+  {
+    // Do nothing
+  }
+  
+  tgps.encode(GPS.read());
+
   // Printing the GPS data
   Serial.println("[DuckLink] --- GPS ---");
   Serial.print("[DuckLink] Latitude  : ");
@@ -178,4 +209,28 @@ String getGPSData() {
   }
 
   return sensorVal;
+}
+
+// Getting GPS data
+void getGPSSeconds(int *hour, int *minute, int *second) {
+
+  while(!GPS.available())
+  {
+    // Do nothing
+  }
+  
+  tgps.encode(GPS.read());
+  
+  // Creating a message of the Latitude and Longitude
+  *second = tgps.time.second();
+  *minute = tgps.time.minute();
+  *hour = tgps.time.hour();
+
+  // Serial.println(tgps.time.second());
+
+  // Check to see if GPS data is being received
+  if (millis() > 5000 && tgps.charsProcessed() < 10)
+  {
+    Serial.println(F("[DuckLink] No GPS data received: check wiring"));
+  }
 }

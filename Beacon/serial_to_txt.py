@@ -5,7 +5,7 @@ import csv
 from time import gmtime, strftime
 
 # Set up the serial monitor
-ser = serial.Serial('/dev/cu.wchusbserial52780149881', 115200)
+ser = serial.Serial('/dev/cu.wchusbserial576D0235371', 115200)
 ser.flushInput()
 
 # Regular expressions to capture the required fields
